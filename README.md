@@ -242,23 +242,3 @@ API keys and sensitive credentials should always be stored in environment variab
 The repository intentionally excludes environment files using .gitignore.
 
 Never expose API keys, GitHub tokens, or other credentials in source code or public repositories.
-
-👩‍💻 Author
-
-Bhavana Sistla
-
-AI/ML Engineer | Python Developer | Full-Stack Developer
-
-Interested in building practical solutions using:
-
-Artificial Intelligence
-Machine Learning
-Python
-React.js
-Flask
-REST APIs
-SQL
-Full-Stack Development
-⭐ Project
-
-If you find this project useful, consider giving the repository a ⭐ on GitHub.
