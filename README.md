@@ -1,5 +1,4 @@
 # Code-Review-Assistant
-# Code Review Assistant
 
 An AI-powered code review assistant that analyzes GitHub Pull Requests and raw code diffs, identifies potential issues, and provides actionable review comments with confidence levels.
 
