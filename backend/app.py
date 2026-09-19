@@ -11,9 +11,11 @@ Run locally with:
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import time
 
 from github_client import fetch_pr_diff
 from review import review_diff
+from stats import log_review, get_stats
 
 app = Flask(__name__)
 CORS(app)  # allows the React frontend (running on a different port) to call this API
@@ -23,6 +25,12 @@ CORS(app)  # allows the React frontend (running on a different port) to call thi
 def health():
     """Simple check to confirm the server is running."""
     return jsonify({"status": "ok"})
+
+
+@app.route("/stats", methods=["GET"])
+def stats():
+    """Returns aggregate stats (avg response time, avg issues per review) across all logged runs."""
+    return jsonify(get_stats())
 
 
 @app.route("/review", methods=["POST"])
@@ -52,6 +60,8 @@ def review():
         return jsonify({"error": "Provide either 'pr_url' or 'diff' in the request body."}), 400
 
     try:
+        start_time = time.time()
+
         if "pr_url" in data:
             diff_text = fetch_pr_diff(data["pr_url"])
         else:
@@ -61,6 +71,10 @@ def review():
             return jsonify({"error": "No diff content found."}), 400
 
         result = review_diff(diff_text)
+
+        elapsed = time.time() - start_time
+        log_review(elapsed, result.get("comments", []))
+
         return jsonify(result)
 
     except Exception as e:

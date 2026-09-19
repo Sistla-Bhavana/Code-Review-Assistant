@@ -13,8 +13,23 @@ When you're ready to go live:
 """
 
 import json
+import os
 
-MOCK_MODE = True
+from dotenv import load_dotenv
+
+load_dotenv()  # reads GEMINI_API_KEY from a local .env file, if present
+
+# If no key is found in the environment, we automatically fall back to mock
+# mode instead of crashing — this way the app still runs for anyone who
+# hasn't set up a key yet (e.g. during early development or a demo).
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+MOCK_MODE = not GEMINI_API_KEY
+
+if not MOCK_MODE:
+    import google.generativeai as genai
+
+    genai.configure(api_key=GEMINI_API_KEY)
+    _model = genai.GenerativeModel("gemini-flash-latest")
 
 
 def call_llm(prompt: str) -> str:
@@ -22,20 +37,15 @@ def call_llm(prompt: str) -> str:
     Sends a prompt to the AI model and returns its raw text response.
     This is the single seam between your app and whichever AI provider you use.
 
-    In mock mode, it returns a canned but realistic response so you can
-    build/test the rest of the app without any API key yet.
+    Runs in mock mode automatically if GEMINI_API_KEY isn't set in the
+    environment — no code changes needed to switch between the two, just
+    add or remove the key from your .env file.
     """
     if MOCK_MODE:
         return _mock_response()
 
-    # TODO: replace this with a real Gemini call once you have a free API key
-    #
-    # import google.generativeai as genai
-    # genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    # model = genai.GenerativeModel("gemini-1.5-flash")
-    # response = model.generate_content(prompt)
-    # return response.text
-    raise NotImplementedError("Set MOCK_MODE = True, or wire up a real LLM call here.")
+    response = _model.generate_content(prompt)
+    return response.text
 
 
 def _mock_response() -> str:
@@ -102,10 +112,19 @@ def review_diff(diff_text: str) -> dict:
     prompt = build_review_prompt(diff_text)
     raw_response = call_llm(prompt)
 
+    # Gemini sometimes wraps JSON in markdown code fences (```json ... ```)
+    # even when told not to — strip those off before parsing if present.
+    cleaned = raw_response.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("```")[1]
+        if cleaned.startswith("json"):
+            cleaned = cleaned[4:]
+        cleaned = cleaned.strip()
+
     try:
-        return json.loads(raw_response)
+        return json.loads(cleaned)
     except json.JSONDecodeError:
         # If the model wraps the JSON in markdown fences or adds stray text,
         # this is where you'd add cleanup logic. For now, surface the raw text
         # so it's easy to debug what the model actually returned.
-        raise ValueError(f"Could not parse AI response as JSON. Raw response:\n{raw_response}")
+        raise ValueError(f"Could not parse AI response as JSON. Raw response:\n{cleaned}")

@@ -1,243 +1,85 @@
-# Code-Review-Assistant
+# AI Code Review Assistant
 
-An AI-powered code review assistant that analyzes GitHub Pull Requests and raw code diffs, identifies potential issues, and provides actionable review comments with confidence levels.
+An AI-powered code review tool that reviews GitHub pull requests (or raw diffs) and returns feedback tagged with **confidence ratings** — so instead of treating every AI comment as equally trustworthy, you can immediately see what's a high-confidence bug versus a low-confidence stylistic suggestion.
 
-Built with **React, Flask, Python, and Google Gemini**, the application is designed to help developers identify bugs, code-quality issues, and improvement opportunities faster.
+## Why this exists
 
----
+Most AI code review tools present every comment with the same authority, whether it's catching a genuine null-reference bug or just expressing a style opinion. This tool separates **"must-fix" issues from "suggestions"**, and rates its own **confidence** (high / medium / low) on each one — a small but important step toward AI tools that communicate what they actually know versus what they're guessing at.
 
-## 🚀 Overview
+## Features
 
-Code Review Assistant simplifies the code review process by automatically analyzing code changes and generating structured review feedback.
+- Review any public GitHub PR by URL, or paste a raw diff directly
+- Comments are split into **Must Fix** (bugs, security issues, correctness problems) and **Suggestions** (style, naming, minor improvements)
+- Each comment includes a **confidence rating** so you know how much to trust it
+- Runs in **mock mode** automatically if no API key is set — the whole app is testable end-to-end with zero setup cost
 
-The system evaluates code changes and categorizes findings based on their importance, helping developers distinguish between:
+## Tech stack
 
-- 🔴 Must-fix bugs
-- 🟠 Potential issues
-- 🟢 Code-quality improvements
-- 🔵 Stylistic suggestions
+- **Backend:** Python, Flask, Flask-CORS
+- **Frontend:** React, Vite
+- **AI:** Google Gemini API (`gemini-1.5-flash`)
+- **Data:** GitHub REST API (public PR diffs, no auth required)
 
-Each review comment is also assigned a confidence level:
+## Architecture
 
-**High | Medium | Low**
+```
+React (Vite)  →  Flask API  →  GitHub API (fetch PR diff)
+                             →  Gemini API (generate review)
+```
 
-This allows developers to focus their attention on the most important findings first.
+The AI call is isolated behind a single function (`call_llm` in `backend/review.py`), so swapping providers only requires changing one file.
 
----
+## Running locally
 
-## ✨ Key Features
-
-### 🔍 AI-Powered Code Analysis
-Analyzes code changes and identifies potential bugs, issues, and improvement opportunities.
-
-### 🐙 GitHub Integration
-Supports reviewing GitHub Pull Requests and retrieving code changes for analysis.
-
-### 📄 Raw Diff Analysis
-Allows developers to provide raw Git diffs for quick code reviews without requiring a GitHub Pull Request.
-
-### 🎯 Confidence-Based Findings
-Each generated review comment is categorized as:
-
-- **High Confidence** – Strong evidence of a real issue
-- **Medium Confidence** – Likely issue requiring developer verification
-- **Low Confidence** – Possible improvement or minor concern
-
-### 🐞 Bug vs. Suggestion Classification
-Separates critical issues from optional stylistic or quality improvements.
-
-### 🤖 Google Gemini Integration
-Uses Google's Gemini models to generate intelligent code-review feedback.
-
-### 🧪 Mock Mode
-The application includes a mock/demo mode so the interface can be explored without configuring an API key.
-
-### 💻 Modern Web Interface
-Responsive React-based frontend designed for a clean and intuitive developer experience.
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-- React.js
-- JavaScript
-- HTML5
-- CSS3
-- Vite
-
-### Backend
-
-- Python
-- Flask
-- REST APIs
-
-### AI
-
-- Google Gemini API
-
-### Development Tools
-
-- Git
-- GitHub
-- VS Code
-
----
-
-## 🏗️ Project Architecture
-
-```text
-Code-Review-Assistant/
-│
-├── backend/
-│   ├── app.py
-│   ├── github_client.py
-│   ├── review.py
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── index.html
-│   ├── package.json
-│   ├── package-lock.json
-│   └── vite.config.js
-│
-├── .gitignore
-└── README.md
-
-#🔄 How It Works
-GitHub Pull Request / Raw Diff
-              │
-              ▼
-        React Frontend
-              │
-              ▼
-        Flask REST API
-              │
-              ▼
-      Code Analysis Engine
-              │
-              ▼
-        Google Gemini AI
-              │
-              ▼
-      Structured Review
-              │
-              ▼
- ┌──────────────────────────┐
- │ Bug / Issue              │
- │ Confidence Level         │
- │ Explanation              │
- │ Suggested Improvement    │
- └──────────────────────────┘
-
- Getting Started
-1. Clone the Repository
-git clone https://github.com/Sistla-Bhavana/Code-Review-Assistant.git
-
-Navigate into the project:
-
-cd Code-Review-Assistant
-🔧 Backend Setup
-
-Navigate to the backend directory:
-
+**Backend:**
+```bash
 cd backend
-
-Create a virtual environment:
-
-python -m venv venv
-
-Activate the environment on Windows:
-
-venv\Scripts\activate
-
-Install dependencies:
-
 pip install -r requirements.txt
-
-Create a .env file:
-
-GEMINI_API_KEY=your_api_key_here
-
-Important: Never commit your .env file or API keys to GitHub.
-
-Start the Flask server:
-
 python app.py
-🎨 Frontend Setup
+```
+Runs at `http://localhost:5000`.
 
-Open another terminal and navigate to the frontend:
-
+**Frontend** (in a separate terminal):
+```bash
 cd frontend
-
-Install dependencies:
-
 npm install
-
-Start the development server:
-
 npm run dev
+```
+Runs at `http://localhost:5173`.
 
-The frontend will be available through the local URL displayed by Vite.
+### Enabling real AI reviews (optional)
 
-🧪 Demo / Mock Mode
+By default the app runs in mock mode (no API key needed) so you can try the full flow immediately. To get real, PR-specific reviews:
 
-The application can be used in mock mode to explore the interface without configuring an AI API key.
+1. Get a free API key from [Google AI Studio](https://aistudio.google.com)
+2. Create a file `backend/.env` containing:
+   ```
+   GEMINI_API_KEY=your-key-here
+   ```
+3. Restart the backend — it automatically detects the key and switches out of mock mode.
 
-This makes it easy for developers, recruiters, and clients to evaluate the application locally.
+## Example
 
-📌 Example Review Output
+Try it on a small real PR: `https://github.com/docsifyjs/docsify-cli/pull/105`
 
-A typical review finding can contain:
+## Project structure
 
-Issue:
-Potential null reference detected.
+```
+code-review-assistant/
+├── backend/
+│   ├── app.py            # Flask routes
+│   ├── github_client.py  # Fetches PR diffs from GitHub's API
+│   ├── review.py          # Prompt + AI call (the only file needed to swap providers)
+│   └── requirements.txt
+└── frontend/
+    ├── src/
+    │   ├── App.jsx        # UI: input, results, confidence badges
+    │   └── main.jsx
+    └── package.json
+```
 
-Type:
-Bug
+## Roadmap
 
-Confidence:
-High
-
-Explanation:
-The variable may be accessed before being initialized,
-which could result in a runtime error.
-
-Recommendation:
-Validate the variable before accessing its properties.
-🎯 Use Cases
-
-Code Review Assistant can be useful for:
-
-Individual developers
-Software development teams
-Code quality analysis
-Pull Request reviews
-Learning and improving coding practices
-Identifying potential bugs
-Automated development workflows
-🔮 Future Improvements
-
-Planned improvements include:
-
-Support for additional AI models
-Automated GitHub Pull Request comments
-Multi-language code analysis
-Code quality scoring
-Security vulnerability detection
-Custom review rules
-Review history and analytics
-CI/CD integration
-Authentication and user accounts
-🔐 Security
-
-API keys and sensitive credentials should always be stored in environment variables.
-
-The repository intentionally excludes environment files using .gitignore.
-
-Never expose API keys, GitHub tokens, or other credentials in source code or public repositories.
+- [ ] Deploy backend (Render) and frontend (Vercel)
+- [ ] Add a review-history log so past reviews are searchable
+- [ ] Support private repos via a GitHub personal access token

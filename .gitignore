@@ -1,16 +1,22 @@
+# Environment variables (NEVER commit API keys)
 .env
-.env.*
-!.env.example
+backend/.env
 
-node_modules/
-dist/
-
+# Python
 __pycache__/
-*.py[cod]
-.venv/
-venv/
+*.pyc
+backend/venv/
+backend/env/
 
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+
+# Logs
+*.log
+backend/server.log
+backend/*.csv
+
+# Editor
 .vscode/
 .idea/
-
-*.log

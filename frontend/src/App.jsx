@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-// Points at your local Flask server during development.
-// Change this to your deployed Render URL once you deploy the backend.
-const API_URL = "http://localhost:5000";
+// Uses VITE_API_URL if set (production, via Vercel env vars), otherwise
+// falls back to your local Flask server during development.
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const SEVERITY_LABEL = {
   "must-fix": "Must Fix",
